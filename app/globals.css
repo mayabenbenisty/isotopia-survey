@@ -3,20 +3,19 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --brand-primary: #3e2d73;
+  --brand-primary-dark: #2f2258;
+  --brand-accent: #a074a7;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-dark: var(--brand-primary-dark);
+  --color-brand-accent: var(--brand-accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
