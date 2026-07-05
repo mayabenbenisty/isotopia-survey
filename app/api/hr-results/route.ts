@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { buildCsv } from "@/lib/csvExport";
+import { hrSessionToken } from "@/lib/hrAuth";
 
 function isAuthorized(req: NextRequest): boolean {
   const session = req.cookies.get("hr_session")?.value;
-  return !!process.env.HR_PASSWORD && session === process.env.HR_PASSWORD;
+  return !!process.env.HR_PASSWORD && session === hrSessionToken();
 }
 
 function countBy<T extends Record<string, unknown>>(rows: T[], key: keyof T) {

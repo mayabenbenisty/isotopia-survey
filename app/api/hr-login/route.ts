@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hrSessionToken } from "@/lib/hrAuth";
 
 export async function POST(req: NextRequest) {
   const { password } = await req.json();
@@ -8,7 +9,7 @@ export async function POST(req: NextRequest) {
   }
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set("hr_session", process.env.HR_PASSWORD, {
+  res.cookies.set("hr_session", hrSessionToken(), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
