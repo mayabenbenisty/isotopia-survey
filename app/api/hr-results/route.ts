@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { buildCsv } from "@/lib/csvExport";
-import { hrSessionToken } from "@/lib/hrAuth";
+import { resolveHrScope } from "@/lib/hrAuth";
 
-function isAuthorized(req: NextRequest): boolean {
-  const session = req.cookies.get("hr_session")?.value;
-  return !!process.env.HR_PASSWORD && session === hrSessionToken();
-}
-
+// Skips rows where the field is null (e.g. "unit" doesn't apply to USA responses)
+// rather than lumping them under a confusing "unknown" bucket.
 function countBy<T extends Record<string, unknown>>(rows: T[], key: keyof T) {
   const counts: Record<string, number> = {};
   for (const row of rows) {
-    const value = String(row[key] ?? "לא ידוע");
+    if (row[key] == null) continue;
+    const value = String(row[key]);
     counts[value] = (counts[value] ?? 0) + 1;
   }
   return counts;
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  const scope = resolveHrScope(req.cookies.get("hr_session")?.value);
+  if (!scope) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -29,10 +28,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // A "us"-scoped login can only ever see locale=en data — this is a hard
+  // server-side boundary, not just a UI filter, so it can't be bypassed via
+  // the query string. A "full"-scoped login (Maya) can optionally narrow the
+  // view with ?locale=he|en for her own convenience; omitting it shows everything.
+  const requestedLocale = req.nextUrl.searchParams.get("locale");
+  const effectiveLocale = scope === "us" ? "en" : requestedLocale;
+  const rows = effectiveLocale ? (data ?? []).filter((r) => r.locale === effectiveLocale) : (data ?? []);
+
   const format = req.nextUrl.searchParams.get("format");
 
   if (format === "csv") {
-    const csv = buildCsv(data ?? []);
+    const csv = buildCsv(rows);
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
@@ -42,9 +49,10 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    total: data?.length ?? 0,
-    bySite: countBy(data ?? [], "site"),
-    byUnit: countBy(data ?? [], "unit"),
-    byDepartment: countBy(data ?? [], "department"),
+    scope,
+    total: rows.length,
+    bySite: countBy(rows, "site"),
+    byUnit: countBy(rows, "unit"),
+    byDepartment: countBy(rows, "department"),
   });
 }

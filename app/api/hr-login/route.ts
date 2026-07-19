@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hrSessionToken } from "@/lib/hrAuth";
+import { hrSessionToken, HrScope } from "@/lib/hrAuth";
 
 export async function POST(req: NextRequest) {
   const { password } = await req.json();
 
-  if (!process.env.HR_PASSWORD || password !== process.env.HR_PASSWORD) {
+  let scope: HrScope | null = null;
+  if (process.env.HR_PASSWORD && password === process.env.HR_PASSWORD) scope = "full";
+  else if (process.env.HR_PASSWORD_US && password === process.env.HR_PASSWORD_US) scope = "us";
+
+  if (!scope) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set("hr_session", hrSessionToken(), {
+  const res = NextResponse.json({ ok: true, scope });
+  res.cookies.set("hr_session", hrSessionToken(scope), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

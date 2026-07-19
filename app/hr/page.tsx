@@ -4,11 +4,14 @@ import { useState } from "react";
 import Image from "next/image";
 
 interface Results {
+  scope: "full" | "us";
   total: number;
   bySite: Record<string, number>;
   byUnit: Record<string, number>;
   byDepartment: Record<string, number>;
 }
+
+type LocaleFilter = "" | "he" | "en";
 
 function CountTable({ title, counts }: { title: string; counts: Record<string, number> }) {
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
@@ -36,6 +39,7 @@ export default function HrResultsPage() {
   const [results, setResults] = useState<Results | null>(null);
   const [loading, setLoading] = useState(false);
   const [resultsError, setResultsError] = useState("");
+  const [localeFilter, setLocaleFilter] = useState<LocaleFilter>("");
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -52,14 +56,15 @@ export default function HrResultsPage() {
       return;
     }
     setLoggedIn(true);
-    await loadResults();
+    await loadResults(localeFilter);
     setLoading(false);
   }
 
-  async function loadResults() {
+  async function loadResults(filter: LocaleFilter) {
     setResultsError("");
     try {
-      const res = await fetch("/api/hr-results");
+      const qs = filter ? `?locale=${filter}` : "";
+      const res = await fetch(`/api/hr-results${qs}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setResultsError(body.error ?? `שגיאה בטעינת התוצאות (${res.status})`);
@@ -69,6 +74,11 @@ export default function HrResultsPage() {
     } catch {
       setResultsError("שגיאה בטעינת התוצאות");
     }
+  }
+
+  function handleFilterChange(filter: LocaleFilter) {
+    setLocaleFilter(filter);
+    loadResults(filter);
   }
 
   if (!loggedIn) {
@@ -100,6 +110,29 @@ export default function HrResultsPage() {
       {resultsError && <p className="text-red-600 mb-4">{resultsError}</p>}
       {results ? (
         <>
+          {results.scope === "full" && (
+            <div className="flex gap-2 mb-6">
+              {(
+                [
+                  ["", "הכול"],
+                  ["he", "ישראל"],
+                  ["en", "ארה\"ב"],
+                ] as [LocaleFilter, string][]
+              ).map(([value, label]) => (
+                <button
+                  key={value || "all"}
+                  onClick={() => handleFilterChange(value)}
+                  className={`rounded px-4 py-1.5 text-sm font-semibold border ${
+                    localeFilter === value
+                      ? "bg-brand-primary text-white border-brand-primary"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
           <p className="mb-6 text-lg">
             סה&quot;כ תשובות שהתקבלו: <strong>{results.total}</strong>
           </p>
@@ -107,7 +140,7 @@ export default function HrResultsPage() {
           <CountTable title="לפי יחידה" counts={results.byUnit} />
           <CountTable title="לפי מחלקה" counts={results.byDepartment} />
           <a
-            href="/api/hr-results?format=csv"
+            href={`/api/hr-results?format=csv${localeFilter ? `&locale=${localeFilter}` : ""}`}
             className="inline-block bg-green-600 text-white rounded px-4 py-2 font-semibold hover:bg-green-700"
           >
             הורדת כל התשובות (CSV לאקסל)

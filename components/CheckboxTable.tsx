@@ -11,19 +11,22 @@ export default function CheckboxTable({
   onChange,
   labelA,
   labelB,
+  ltr = false,
 }: {
   items: RatingItem[];
   values: Record<string, CheckboxPair | undefined>;
   onChange: (itemId: string, key: "a" | "b", checked: boolean) => void;
   labelA: string;
   labelB: string;
+  ltr?: boolean;
 }) {
+  const labelAlign = ltr ? "text-left" : "text-right";
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr>
-            <th className="text-right p-2 border-b border-gray-200"></th>
+            <th className={`${labelAlign} p-2 border-b border-gray-200`}></th>
             <th className="p-2 border-b border-gray-200 font-normal text-xs text-gray-600 text-center min-w-[100px]">{labelA}</th>
             <th className="p-2 border-b border-gray-200 font-normal text-xs text-gray-600 text-center min-w-[100px]">{labelB}</th>
           </tr>
@@ -33,7 +36,7 @@ export default function CheckboxTable({
             const pair = values[item.id] ?? { a: false, b: false };
             return (
               <tr key={item.id} className="border-b border-gray-100">
-                <td className="p-2 text-right">{item.label}</td>
+                <td className={`p-2 ${labelAlign}`}>{item.label}</td>
                 <td className="text-center">
                   <input
                     type="checkbox"

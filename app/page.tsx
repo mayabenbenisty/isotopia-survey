@@ -16,13 +16,12 @@ export default function CountrySelectPage() {
           >
             ישראל
           </Link>
-          <button
-            disabled
-            className="block w-full bg-gray-200 text-gray-500 rounded-lg p-5 text-xl font-semibold cursor-not-allowed"
-            title="Coming soon"
+          <Link
+            href="/en"
+            className="block w-full bg-brand-primary text-white rounded-lg p-5 text-xl font-semibold hover:bg-brand-primary-dark transition-colors"
           >
-            USA <span className="block text-sm font-normal">(בקרוב / coming soon)</span>
-          </button>
+            USA
+          </Link>
         </div>
       </div>
     </main>

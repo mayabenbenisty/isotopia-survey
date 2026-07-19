@@ -8,7 +8,15 @@ import {
   CULTURE_TRAITS,
   CLOSING_QUESTIONS,
 } from "./questions";
+import {
+  RECOMMEND_REASONS_POSITIVE_EN,
+  RECOMMEND_REASONS_NEGATIVE_EN,
+  SATISFACTION_FACTORS_EN,
+} from "./questions.en";
 
+// Column headers stay in Hebrew (Maya's primary reporting language, and ids match 1:1
+// across locales so it's the same question either way). Cell VALUES for checkbox/list
+// answers are looked up per-row in whichever language that respondent actually answered in.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function buildCsv(rows: any[]): string {
   const headers: string[] = ["id", "created_at", "locale", "site", "unit", "department"];
@@ -33,6 +41,7 @@ export function buildCsv(rows: any[]): string {
   const csvRows = [headers.map(escapeCsv).join(",")];
 
   for (const row of rows) {
+    const isEn = row.locale === "en";
     const values: string[] = [row.id, row.created_at, row.locale, row.site, row.unit, row.department];
 
     for (const section of RATING_SECTIONS) {
@@ -41,24 +50,28 @@ export function buildCsv(rows: any[]): string {
       }
     }
 
-    const reasonList = row.recommend_direction === "positive" ? RECOMMEND_REASONS_POSITIVE : RECOMMEND_REASONS_NEGATIVE;
+    const reasonList = isEn
+      ? row.recommend_direction === "positive" ? RECOMMEND_REASONS_POSITIVE_EN : RECOMMEND_REASONS_NEGATIVE_EN
+      : row.recommend_direction === "positive" ? RECOMMEND_REASONS_POSITIVE : RECOMMEND_REASONS_NEGATIVE;
     const reasonLabels: string[] = (row.recommend_reasons ?? [])
       .filter((id: string) => id !== RECOMMEND_REASON_OTHER_ID)
       .map((id: string) => reasonList.find((r) => r.id === id)?.label ?? id);
     values.push(row.recommend_direction ?? "", reasonLabels.join("; "), row.recommend_other_text ?? "");
 
+    const factorsList = isEn ? SATISFACTION_FACTORS_EN : SATISFACTION_FACTORS;
     const factorLabels: string[] = (row.satisfaction_factors ?? []).map(
-      (id: string) => SATISFACTION_FACTORS.find((f) => f.id === id)?.label ?? id
+      (id: string) => factorsList.find((f) => f.id === id)?.label ?? id
     );
     values.push(factorLabels.join("; "));
 
+    const yes = isEn ? "Yes" : "כן";
     for (const trait of MANAGER_TRAITS) {
       const pair = row.manager_traits?.[trait.id];
-      values.push(pair?.a ? "כן" : "", pair?.b ? "כן" : "");
+      values.push(pair?.a ? yes : "", pair?.b ? yes : "");
     }
     for (const trait of CULTURE_TRAITS) {
       const pair = row.culture_traits?.[trait.id];
-      values.push(pair?.a ? "כן" : "", pair?.b ? "כן" : "");
+      values.push(pair?.a ? yes : "", pair?.b ? yes : "");
     }
 
     values.push(row.fairness_followup ?? "");
