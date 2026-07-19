@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 
 interface Results {
-  scope: "full" | "us";
+  scope: "full" | "us" | "modiin";
   total: number;
   bySite: Record<string, number>;
   byUnit: Record<string, number>;

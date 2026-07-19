@@ -7,6 +7,7 @@ export async function POST(req: NextRequest) {
   let scope: HrScope | null = null;
   if (process.env.HR_PASSWORD && password === process.env.HR_PASSWORD) scope = "full";
   else if (process.env.HR_PASSWORD_US && password === process.env.HR_PASSWORD_US) scope = "us";
+  else if (process.env.HR_PASSWORD_MODIIN && password === process.env.HR_PASSWORD_MODIIN) scope = "modiin";
 
   if (!scope) {
     return NextResponse.json({ ok: false }, { status: 401 });

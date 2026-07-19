@@ -28,13 +28,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // A "us"-scoped login can only ever see locale=en data — this is a hard
-  // server-side boundary, not just a UI filter, so it can't be bypassed via
-  // the query string. A "full"-scoped login (Maya) can optionally narrow the
-  // view with ?locale=he|en for her own convenience; omitting it shows everything.
-  const requestedLocale = req.nextUrl.searchParams.get("locale");
-  const effectiveLocale = scope === "us" ? "en" : requestedLocale;
-  const rows = effectiveLocale ? (data ?? []).filter((r) => r.locale === effectiveLocale) : (data ?? []);
+  // "us" and "modiin"-scoped logins are hard-locked server-side to their slice of
+  // the data — this can't be bypassed via the query string. A "full"-scoped login
+  // (Maya) can optionally narrow the view with ?locale=he|en for her own
+  // convenience; omitting it shows everything.
+  const MODIIN_SITE = "מודיעין";
+  let rows = data ?? [];
+  if (scope === "us") {
+    rows = rows.filter((r) => r.locale === "en");
+  } else if (scope === "modiin") {
+    rows = rows.filter((r) => r.site === MODIIN_SITE);
+  } else {
+    const requestedLocale = req.nextUrl.searchParams.get("locale");
+    if (requestedLocale) rows = rows.filter((r) => r.locale === requestedLocale);
+  }
 
   const format = req.nextUrl.searchParams.get("format");
 
