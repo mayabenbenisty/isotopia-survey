@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
   const format = req.nextUrl.searchParams.get("format");
 
   if (format === "csv") {
-    const csv = buildCsv(rows);
+    const csv = buildCsv(rows, scope === "us" ? "en" : "he");
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",

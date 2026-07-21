@@ -12,29 +12,45 @@ import {
   RECOMMEND_REASONS_POSITIVE_EN,
   RECOMMEND_REASONS_NEGATIVE_EN,
   SATISFACTION_FACTORS_EN,
+  RATING_SECTIONS_EN,
+  MANAGER_TRAITS_EN,
+  CULTURE_TRAITS_EN,
+  CLOSING_QUESTIONS_EN,
 } from "./questions.en";
 
-// Column headers stay in Hebrew (Maya's primary reporting language, and ids match 1:1
-// across locales so it's the same question either way). Cell VALUES for checkbox/list
-// answers are looked up per-row in whichever language that respondent actually answered in.
+// Column headers default to Hebrew (Maya's primary reporting language), but callers
+// exporting USA-only data can request English headers instead — ids match 1:1 across
+// locales, so the same rating/trait/question order is used either way. Cell VALUES for
+// checkbox/list answers are looked up per-row in whichever language that respondent
+// actually answered in, regardless of the header language.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildCsv(rows: any[]): string {
+export function buildCsv(rows: any[], headerLocale: "he" | "en" = "he"): string {
+  const useEnHeaders = headerLocale === "en";
+  const sections = useEnHeaders ? RATING_SECTIONS_EN : RATING_SECTIONS;
+  const managerTraits = useEnHeaders ? MANAGER_TRAITS_EN : MANAGER_TRAITS;
+  const cultureTraits = useEnHeaders ? CULTURE_TRAITS_EN : CULTURE_TRAITS;
+  const closingQuestions = useEnHeaders ? CLOSING_QUESTIONS_EN : CLOSING_QUESTIONS;
+  const managerStrengthLabel = useEnHeaders ? "Manager - Strength" : "מנהל - חוזקה";
+  const managerGrowthLabel = useEnHeaders ? "Manager - Growth opportunity" : "מנהל - הזדמנות לשיפור";
+  const cultureCurrentLabel = useEnHeaders ? "Culture - Current state" : "תרבות - מצב קיים";
+  const cultureDesiredLabel = useEnHeaders ? "Culture - Desired state" : "תרבות - מצב רצוי";
+
   const headers: string[] = ["id", "created_at", "locale", "site", "unit", "department"];
-  for (const section of RATING_SECTIONS) {
+  for (const section of sections) {
     for (const item of section.items) {
       headers.push(`${section.title}: ${item.label}`);
     }
   }
   headers.push("recommend_direction", "recommend_reasons", "recommend_other_text");
   headers.push("satisfaction_factors");
-  for (const trait of MANAGER_TRAITS) {
-    headers.push(`מנהל - חוזקה: ${trait.label}`, `מנהל - הזדמנות לשיפור: ${trait.label}`);
+  for (const trait of managerTraits) {
+    headers.push(`${managerStrengthLabel}: ${trait.label}`, `${managerGrowthLabel}: ${trait.label}`);
   }
-  for (const trait of CULTURE_TRAITS) {
-    headers.push(`תרבות - מצב קיים: ${trait.label}`, `תרבות - מצב רצוי: ${trait.label}`);
+  for (const trait of cultureTraits) {
+    headers.push(`${cultureCurrentLabel}: ${trait.label}`, `${cultureDesiredLabel}: ${trait.label}`);
   }
   headers.push("fairness_followup");
-  for (const q of CLOSING_QUESTIONS) {
+  for (const q of closingQuestions) {
     headers.push(q.label);
   }
 

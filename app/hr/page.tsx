@@ -15,6 +15,7 @@ type LocaleFilter = "" | "he" | "en";
 
 function CountTable({ title, counts }: { title: string; counts: Record<string, number> }) {
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) return null;
   return (
     <div className="mb-6">
       <h3 className="font-semibold mb-2">{title}</h3>
@@ -51,7 +52,7 @@ export default function HrResultsPage() {
       body: JSON.stringify({ password }),
     });
     if (!res.ok) {
-      setError("סיסמה שגויה");
+      setError("Incorrect password");
       setLoading(false);
       return;
     }
@@ -83,30 +84,32 @@ export default function HrResultsPage() {
 
   if (!loggedIn) {
     return (
-      <main dir="rtl" className="max-w-sm mx-auto p-6 mt-20">
+      <main dir="ltr" className="max-w-sm mx-auto p-6 mt-20">
         <Image src="/logo.png" alt="Isotopia" width={160} height={58} className="mx-auto mb-6" />
-        <h1 className="text-xl font-bold mb-4 text-brand-primary">כניסת HR</h1>
+        <h1 className="text-xl font-bold mb-4 text-brand-primary">HR Login</h1>
         <form onSubmit={handleLogin} className="space-y-3">
           <input
             type="password"
-            placeholder="סיסמה"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full border rounded p-2"
           />
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <button type="submit" disabled={loading} className="w-full bg-brand-primary text-white rounded p-2 font-semibold hover:bg-brand-primary-dark">
-            כניסה
+            Login
           </button>
         </form>
       </main>
     );
   }
 
+  const isUs = results?.scope === "us";
+
   return (
-    <main dir="rtl" className="max-w-2xl mx-auto p-6">
+    <main dir={isUs ? "ltr" : "rtl"} className="max-w-2xl mx-auto p-6">
       <Image src="/logo.png" alt="Isotopia" width={160} height={58} className="mb-6" />
-      <h1 className="text-xl font-bold mb-4 text-brand-primary">תוצאות הסקר</h1>
+      <h1 className="text-xl font-bold mb-4 text-brand-primary">{isUs ? "Survey Results" : "תוצאות הסקר"}</h1>
       {resultsError && <p className="text-red-600 mb-4">{resultsError}</p>}
       {results ? (
         <>
@@ -134,20 +137,28 @@ export default function HrResultsPage() {
             </div>
           )}
           <p className="mb-6 text-lg">
-            סה&quot;כ תשובות שהתקבלו: <strong>{results.total}</strong>
+            {isUs ? (
+              <>
+                Total responses received: <strong>{results.total}</strong>
+              </>
+            ) : (
+              <>
+                סה&quot;כ תשובות שהתקבלו: <strong>{results.total}</strong>
+              </>
+            )}
           </p>
-          <CountTable title="לפי אתר" counts={results.bySite} />
-          <CountTable title="לפי יחידה" counts={results.byUnit} />
-          <CountTable title="לפי מחלקה" counts={results.byDepartment} />
+          <CountTable title={isUs ? "By Site" : "לפי אתר"} counts={results.bySite} />
+          <CountTable title={isUs ? "By Unit" : "לפי יחידה"} counts={results.byUnit} />
+          <CountTable title={isUs ? "By Department" : "לפי מחלקה"} counts={results.byDepartment} />
           <a
             href={`/api/hr-results?format=csv${localeFilter ? `&locale=${localeFilter}` : ""}`}
             className="inline-block bg-green-600 text-white rounded px-4 py-2 font-semibold hover:bg-green-700"
           >
-            הורדת כל התשובות (CSV לאקסל)
+            {isUs ? "Download all responses (CSV for Excel)" : "הורדת כל התשובות (CSV לאקסל)"}
           </a>
         </>
       ) : (
-        !resultsError && <p>טוען...</p>
+        !resultsError && <p>{isUs ? "Loading..." : "טוען..."}</p>
       )}
     </main>
   );
